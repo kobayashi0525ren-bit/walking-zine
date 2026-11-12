@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>いっしょにさんぽするZINE</title>
 
-<!-- Adobe Fonts -->
 <link rel="stylesheet" href="https://use.typekit.net/YOUR_PROJECT_ID.css">
 
 <style>
@@ -228,6 +227,7 @@ button, input {
     align-self: start;
 }
 
+/* 写真を左右にランダム風に傾ける */
 .photo-card:nth-child(6n + 1) {
     transform: rotate(-3deg);
 }
@@ -372,25 +372,16 @@ footer {
 @media (max-width: 700px) {
     .gallery {
         grid-template-columns: repeat(2, 1fr);
-        gap: 30px 12px;
+        gap: 20px 12px;
     }
 
-    .photo-card {
-        width: 86%;
-    }
-
-    .photo-card:nth-child(odd) {
+    .photo-card:nth-child(3n + 2),
+    .photo-card:nth-child(3n) {
         margin-top: 0;
-        transform: rotate(-3deg);
     }
 
     .photo-card:nth-child(even) {
-        margin-top: 35px;
-        transform: rotate(3deg);
-    }
-
-    .photo-card:hover {
-        transform: translateY(-5px) rotate(0deg);
+        margin-top: 25px;
     }
 
     .photo-location {
@@ -405,21 +396,10 @@ footer {
 @media (max-width: 420px) {
     .gallery {
         grid-template-columns: 1fr;
-        gap: 30px;
-    }
-
-    .photo-card {
-        width: 75%;
-    }
-
-    .photo-card:nth-child(odd) {
-        margin-top: 0;
-        transform: rotate(-3deg);
     }
 
     .photo-card:nth-child(even) {
-        margin-top: 15px;
-        transform: rotate(3deg);
+        margin-top: 0;
     }
 }
 </style>
@@ -516,7 +496,7 @@ footer {
     </footer>
 
 </div>
-</div><!-- /#site -->
+</div>
 
 <!-- 写真拡大モーダル -->
 <div class="modal" id="modal">
@@ -544,10 +524,7 @@ footer {
 
 <script>
 
-/* =================================
-   IndexedDBの準備
-================================= */
-
+/* IndexedDBの準備 */
 const DB_NAME = "WalkingZineDB";
 const DB_VERSION = 1;
 const STORE_NAME = "photos";
@@ -557,24 +534,18 @@ let photos = [];
 let selectedPhotoId = null;
 
 function openDatabase() {
-
     return new Promise((resolve, reject) => {
-
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
-
             const database = event.target.result;
 
             if (!database.objectStoreNames.contains(STORE_NAME)) {
-
                 database.createObjectStore(STORE_NAME, {
                     keyPath: "id",
                     autoIncrement: true
                 });
-
             }
-
         };
 
         request.onsuccess = () => {
@@ -585,92 +556,47 @@ function openDatabase() {
         request.onerror = () => {
             reject(request.error);
         };
-
     });
-
 }
 
-/* =================================
-   写真を保存
-================================= */
-
+/* 写真を保存 */
 function savePhoto(photo) {
-
     return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            STORE_NAME,
-            "readwrite"
-        );
-
+        const transaction = db.transaction(STORE_NAME, "readwrite");
         const store = transaction.objectStore(STORE_NAME);
-
         const request = store.add(photo);
 
         request.onsuccess = () => resolve(request.result);
-
         request.onerror = () => reject(request.error);
-
     });
-
 }
 
-/* =================================
-   写真を取得
-================================= */
-
+/* 写真を取得 */
 function getAllPhotos() {
-
     return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            STORE_NAME,
-            "readonly"
-        );
-
+        const transaction = db.transaction(STORE_NAME, "readonly");
         const store = transaction.objectStore(STORE_NAME);
-
         const request = store.getAll();
 
         request.onsuccess = () => resolve(request.result);
-
         request.onerror = () => reject(request.error);
-
     });
-
 }
 
-/* =================================
-   写真を削除
-================================= */
-
+/* 写真を削除 */
 function removePhoto(id) {
-
     return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            STORE_NAME,
-            "readwrite"
-        );
-
+        const transaction = db.transaction(STORE_NAME, "readwrite");
         const store = transaction.objectStore(STORE_NAME);
-
         const request = store.delete(id);
 
         request.onsuccess = () => resolve();
-
         request.onerror = () => reject(request.error);
-
     });
-
 }
 
-/* =================================
-   写真一覧を更新
-================================= */
-
+/* 写真一覧を更新 */
 async function displayPhotos() {
-
     photos = await getAllPhotos();
 
     const gallery = document.getElementById("gallery");
@@ -684,22 +610,18 @@ async function displayPhotos() {
 
     // 場所で検索
     let filteredPhotos = photos.filter(photo => {
-
         return photo.location
             .toLowerCase()
             .includes(searchWord);
-
     });
 
     // 日付で並び替え
     filteredPhotos.sort((a, b) => {
-
         if (sortType === "newest") {
             return b.date.localeCompare(a.date);
         }
 
         return a.date.localeCompare(b.date);
-
     });
 
     // 写真枚数
@@ -709,19 +631,15 @@ async function displayPhotos() {
     gallery.innerHTML = "";
 
     if (filteredPhotos.length === 0) {
-
         gallery.innerHTML = `
             <p class="empty-message">
                 写真が見つかりません。
             </p>
         `;
-
         return;
-
     }
 
     filteredPhotos.forEach(photo => {
-
         const card = document.createElement("article");
         card.className = "photo-card";
 
@@ -751,30 +669,22 @@ async function displayPhotos() {
         });
 
         gallery.appendChild(card);
-
     });
-
 }
 
-/* =================================
-   写真追加フォーム
-================================= */
-
+/* 写真追加フォーム */
 document.getElementById("toggleForm").addEventListener(
     "click",
     () => {
-
         document
             .getElementById("formArea")
             .classList.toggle("open");
-
     }
 );
 
 document.getElementById("photoForm").addEventListener(
     "submit",
     async (event) => {
-
         event.preventDefault();
 
         const file = document.getElementById("photoFile").files[0];
@@ -801,7 +711,6 @@ document.getElementById("photoForm").addEventListener(
         };
 
         try {
-
             await savePhoto(photo);
 
             document.getElementById("photoForm").reset();
@@ -813,39 +722,26 @@ document.getElementById("photoForm").addEventListener(
             await displayPhotos();
 
         } catch (error) {
-
             console.error(error);
             alert("写真を保存できませんでした。");
-
         }
-
     }
 );
 
-/* =================================
-   検索
-================================= */
-
+/* 検索 */
 document.getElementById("searchInput").addEventListener(
     "input",
     displayPhotos
 );
 
-/* =================================
-   並び替え
-================================= */
-
+/* 並び替え */
 document.getElementById("sortSelect").addEventListener(
     "change",
     displayPhotos
 );
 
-/* =================================
-   写真を拡大表示
-================================= */
-
+/* 写真を拡大表示 */
 function openModal(photo) {
-
     selectedPhotoId = photo.id;
 
     const modal = document.getElementById("modal");
@@ -860,21 +756,13 @@ function openModal(photo) {
         photo.location;
 
     modal.classList.add("open");
-
 }
 
-/* =================================
-   拡大表示を閉じる
-================================= */
-
+/* 拡大表示を閉じる */
 function closeModal() {
-
     document.getElementById("modal").classList.remove("open");
-
     document.getElementById("modalImage").src = "";
-
     selectedPhotoId = null;
-
 }
 
 document.getElementById("closeModal").addEventListener(
@@ -885,22 +773,16 @@ document.getElementById("closeModal").addEventListener(
 document.getElementById("modal").addEventListener(
     "click",
     (event) => {
-
         if (event.target.id === "modal") {
             closeModal();
         }
-
     }
 );
 
-/* =================================
-   写真削除
-================================= */
-
+/* 写真削除 */
 document.getElementById("deleteButton").addEventListener(
     "click",
     async () => {
-
         if (selectedPhotoId === null) return;
 
         const result = confirm(
@@ -912,34 +794,23 @@ document.getElementById("deleteButton").addEventListener(
         await removePhoto(selectedPhotoId);
 
         closeModal();
-
         await displayPhotos();
-
     }
 );
 
-/* =================================
-   起動
-================================= */
-
+/* 起動 */
 async function init() {
-
     try {
-
         await openDatabase();
-
         await displayPhotos();
 
     } catch (error) {
-
         console.error(error);
 
         alert(
             "データベースを開けませんでした。ブラウザの設定を確認してください。"
         );
-
     }
-
 }
 
 init();
